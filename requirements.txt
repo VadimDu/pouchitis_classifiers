@@ -1,0 +1,7 @@
+Python (version >=3.0)
+xgboost
+sklearn
+pandas
+numpy
+scipy
+matplotlib
