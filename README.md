@@ -1,4 +1,4 @@
-# pouchitis_classifiers
+# Pouchitis classifiers
 Dysbiosis in metabolic genes of the gut microbiomes of patients with inflammatory bowel diseases
 
 This is the code used in the manuscript to generate a machine learning model, i.e. pouchitis classifier, to distinguish between patients with a pouch phenotypes (normal pouch vs. pouchitis) based on bacterial speceis, metabolic pathways or enzmes profiles from shotgun metagenomic data. 
