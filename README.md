@@ -11,7 +11,7 @@ You need to have Python version >=3.0 and the following modules installed:
 <br/>sklearn
 <br/>pandas
 <br/>numpy
-<br/>matplotlib
+<br/>matplotlib<br/>
 In addition, you need to install XGBoost (eXtreme Gradient Boosting) module. If you are usually installing Python modules with pip, use:<br/>
 `pip3 install xgboost`<br/>
 If you are working with Conda, use:<br/>
