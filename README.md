@@ -7,11 +7,11 @@ The classifier is built using the **xgboost** model, which is an algorithm of gr
 
 ## Python modules requirements
 You need to have Python version >=3.0 and the following modules installed:
-xgboost
-sklearn
-pandas
-numpy
-matplotlib
+<br/>xgboost<br/>
+<br/>sklearn<br/>
+<br/>pandas<br/>
+<br/>numpy<br/>
+<br/>matplotlib<br/>
 In addition, you need to install XGBoost (eXtreme Gradient Boosting) module. If you are usually installing Python modules with pip, use:<br/>
 `pip3 install xgboost`<br/>
 If you are working with Conda, use:<br/>
