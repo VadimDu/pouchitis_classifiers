@@ -12,7 +12,7 @@ sklearn
 pandas
 numpy
 matplotlib
-In addition, you need to install XGBoost (eXtreme Gradient Boosting) module. If you are usually installing Python modules with pip, use:  __
+In addition, you need to install XGBoost (eXtreme Gradient Boosting) module. If you are usually installing Python modules with pip, use:<br/>
 `pip3 install xgboost`
 If you are working with Conda, use:
 `conda install -c conda-forge xgboost`
