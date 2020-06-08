@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
-from sklearn.metrics import average_precision_score, precision_recall_curve, confusion_matrix, accuracy_score, roc_curve, auc
+from sklearn.metrics import confusion_matrix, accuracy_score, roc_curve, auc
 
 try:
     import xgboost as xgb ##XGBoost, extreme gradient boosting model
@@ -26,7 +26,6 @@ except:
 #Load the features data (species / pathways / enzymes) and the labels of the data (metadata) for classification
 #Replace the path and name of your file:
 target_labels = pd.read_csv("/home/dnx/Downloads/ABX_gut_metagenome/Pouchitis_classifiers/metadata_labels_n208_RMC_Pouch_cohort_for_ML.txt", index_col=0, sep="\t")
-ra_last_pheno = pd.read_csv("/home/dnx/Downloads/ABX_gut_metagenome/Pouchitis_classifiers/metadata_n42_RMC_Pouch_cohort_for_ML_RA_last_followup_pheno.txt", index_col=0, sep="\t")
 taxa_data = pd.read_csv("/home/dnx/Downloads/ABX_gut_metagenome/Pouchitis_classifiers/Taxa_species_profile_cpm_n208_RMC_Pouch_cohort.txt", index_col=0, sep="\t")
 metacyc = pd.read_csv("/home/dnx/Downloads/ABX_gut_metagenome/Pouchitis_classifiers/MetaCyc_pathways_profile_cpm_n208_RMC_Pouch_cohort.txt", index_col=0, sep="\t")
 enzymes = pd.read_csv("/home/dnx/Downloads/ABX_gut_metagenome/Pouchitis_classifiers/EC4_enzymes_profile_cpm_n208_RMC_Pouch_cohort_0.05filt.txt", index_col=0, sep="\t")
@@ -43,11 +42,11 @@ kfold = StratifiedKFold(n_splits=5, random_state=None, shuffle=True)
 ###Repeat 100 times the K-fold cross-validation, calculate performance matrices for each 5-fold CV repeat and also average feature importance scores:
 mean_list, std_list, sensitivity, specificity, acc_list, rp_mean_feat_import = [],[],[],[],[],[]
 for _ in range(100):
-    results = cross_val_score(model, taxa_data_po, target_labels["labels_binary"], cv=kfold, scoring='roc_auc', n_jobs=2) #returns AUC score for each k-fold CV
+    results = cross_val_score(model, taxa_data, target_labels["labels_binary"], cv=kfold, scoring='roc_auc', n_jobs=2) #returns AUC score for each k-fold CV
     print("AUC: %.3f (%.3f)" % (results.mean(), results.std()))
     mean_list.append(results.mean())
     std_list.append(results.std())
-    y_pred_cv = cross_val_predict(model, taxa_data_po, target_labels["labels_binary"], cv=kfold, method='predict', n_jobs=2) #returns the predicted y (labels) values
+    y_pred_cv = cross_val_predict(model, taxa_data, target_labels["labels_binary"], cv=kfold, method='predict', n_jobs=2) #returns the predicted y (labels) values
     tn, fp, fn, tp = confusion_matrix(target_labels["labels_binary"], y_pred_cv).ravel() #obtain the number of true positives, true negatives, false positives and false negatives
     sensitivity.append(tp/(tp+fn))
     specificity.append(tn/(tn+fp))
@@ -55,7 +54,7 @@ for _ in range(100):
     
     ###Obtain model feature importance for each fold within the K-fold CV and repeat to calculte the average importance score:
     cv_model_feat_import = []
-    cv_estimator = cross_validate(model, taxa_data_po, target_labels["labels_binary"], cv=kfold, return_estimator=True)
+    cv_estimator = cross_validate(model, taxa_data, target_labels["labels_binary"], cv=kfold, return_estimator=True)
     for estimator in cv_estimator['estimator']: #cv_estimator is a dict the size of CV fold (k=5)
         cv_model_feat_import.append(estimator.feature_importances_)
     rp_mean_feat_import.append(np.mean(cv_model_feat_import, axis=0)) #mean importance score for each feature across 5-fold CV
@@ -67,14 +66,17 @@ print("Mean AUC: %.3f (%.3f)" % (np.mean(mean_list), np.mean(std_list)))
 print("Mean accuracy: %.2f%% (%.2f)" % (np.mean(acc_list), np.std(acc_list))) 
 
 #Save the importance scores of each feature into a dataframe
-features_scores_tree_based = pd.DataFrame({"XGboost_average_feature_importance":np.mean(rp_mean_feat_import, axis=0)}, index = taxa_data_po.columns)
+features_scores_tree_based = pd.DataFrame({"XGboost_average_feature_importance":np.mean(rp_mean_feat_import, axis=0)}, index = taxa_data.columns)
 features_scores_tree_based.sort_values("XGboost_average_feature_importance", ascending=False, inplace=True)
 
 #Create a plot with the desired number of highest scoring features (e.g. 30):
 plot_feature_importance_scores(features_scores_tree_based, 40)
 
 #Create a new table with only a subset of the original features, based on empirical number of highest scoring features (user selected) 
-taxa_data_po_sub = subset_features_in_df(features_scores_tree_based.index[0:75], taxa_data_po)
+taxa_data_sub = subset_features_in_df(features_scores_tree_based.index[0:60], taxa_data)
+#The highest scoring 40 features (species) obtained in the original manuscript:
+best_features_species_40 = pd.read_csv("/home/dnx/Downloads/ABX_gut_metagenome/Pouchitis_classifiers/Species_average_features_importance_XGBoost_5CV-50rep.txt", index_col=0, sep="\t")
+taxa_data_sub = subset_features_in_df(best_features_species_40.index, taxa_data)
 
 ###------------------------------------------------------------------------------------###
 
@@ -102,21 +104,20 @@ print("Best score: %0.3f using parameter %s" % (grid.best_score_, grid.best_para
 
 #----------------------Utility functions:-----------------------------------###
 
-def delete_features_in_df(features_list, df):
+def subset_features_in_df (features_list, df):
     '''Returns a subsetted dataframe including only the specified samples or features
        Assuming the features (e.g species/genes) are in the columns and samples are in rows'''
     subset_df = pd.DataFrame()
-    col_del,missing = [],[]
+    missing = []
     for taxa in features_list:
         if (taxa in df.columns): #first check if each feature exists in the df, only then subset these features
-            col_del.append(taxa)
+            subset_df[taxa] = df.loc[:, taxa]
         else:
             missing.append(taxa)
-    subset_df = df.drop(col_del, axis=1, inplace=False)
     print("Missing feaures/samples:", missing)
     return (subset_df)
 
-def plot_feature_importance_scores(df, number_features):
+def plot_feature_importance_scores (df, number_features):
     '''Provide a table with feature names and importance scores (df) and the number of features you wish to plot (number_features)'''
     features_plot = features_scores_tree_based.iloc[0:number_features,:]
     colors_map = {"commensal - unknown" : "darkblue","potential pathobiont / oral" : "darkred", "beneficial" : "forestgreen"}

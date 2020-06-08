@@ -13,13 +13,14 @@ import pandas as pd
 import numpy as np
 from numpy import interp #returns the one-dimensional piecewise linear interpolant to a function with given discrete data points
 import matplotlib.pyplot as plt
-from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
-from sklearn.metrics import average_precision_score, precision_recall_curve, confusion_matrix, accuracy_score, roc_curve, auc
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import confusion_matrix, roc_curve, auc
 
 try:
     import xgboost as xgb ##XGBoost, extreme gradient boosting model
 except:
     sys.exit("This program requires Python3 xgboost module, please install it and try again")
+
 
 #Initialize lists to hold the results obtained from running the code below for repeated cross validation
 mean_tpr_l, tprs_lower_l, tprs_upper_l, mean_auc_l, std_auc_l, mean_fpr_l = [],[],[],[],[],[]
@@ -32,8 +33,8 @@ for _ in range(50):
     i += 1
     kfold = StratifiedKFold(n_splits=5, random_state=None, shuffle=True)
     #Split the training set into k-folds for cross validation, and calculate all the parameters for each fold repeatedly (x100)
-    for train, test in kfold.split(taxa_data_po_sub.values, target_labels["labels_binary"].values):
-        probs_cv = model.fit(taxa_data_po_sub.values[train], target_labels["labels_binary"].values[train]).predict_proba(taxa_data_po_sub.values[test])
+    for train, test in kfold.split(taxa_data_sub.values, target_labels["labels_binary"].values):
+        probs_cv = model.fit(taxa_data_sub.values[train], target_labels["labels_binary"].values[train]).predict_proba(taxa_data_sub.values[test])
         # Compute ROC curve and area the curve
         fpr, tpr, thresholds = roc_curve(target_labels["labels_binary"].values[test], probs_cv[:, 1])
         tprs.append(interp(mean_fpr, fpr, tpr))
