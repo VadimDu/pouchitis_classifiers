@@ -13,7 +13,7 @@ pandas
 numpy
 matplotlib
 In addition, you need to install XGBoost (eXtreme Gradient Boosting) module. If you are usually installing Python modules with pip, use:<br/>
-`pip3 install xgboost`
+`pip3 install xgboost`<br/>
 If you are working with Conda, use:<br/>
 `conda install -c conda-forge xgboost`
 
