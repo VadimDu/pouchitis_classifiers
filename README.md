@@ -7,7 +7,6 @@ The classifier is built using the **xgboost** model, which is an algorithm of gr
 
 ## Python modules requirements
 You need to have Python version >=3.0 and the following modules installed:
-<br/>xgboost
 <br/>sklearn
 <br/>pandas
 <br/>numpy
